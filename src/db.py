@@ -35,29 +35,6 @@ def print_db() -> None:
     for row in data:
         print(row)
 
-"""
-# returns the id of a free resource of the requested type, -1 if there are none
-def request(request_type, value) -> int:
-    conn = sqlite3.connect(constants.DB_PATH)
-    cursor = conn.cursor()
-
-    request_query = f"SELECT * FROM {constants.TABLE_NAME} WHERE state=='free' AND {request_type}='{value}'"
-    # print(request_query)
-    cursor.execute(request_query)
-
-    data = cursor.fetchall()
-    conn.close()
-    
-    if len(data) == 0:
-        return -1
-
-    return data[0]
-
-    print(f"request result:")
-    for row in data:
-        print(row)
-"""
-
 def lock(id) -> None:
     conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
