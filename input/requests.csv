@@ -1,4 +1,4 @@
-time,user_id,request_type,request,prio,timeout(s)
+time,user_id,request_type,request,prio,timeout
 0,Lorenzo,name,AMBER,low,60
 10,Alessandro,model,TC397XE,high,240
 20,Fabrizio,model,TC397XE,high,3600
