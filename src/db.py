@@ -3,7 +3,7 @@ import csv
 
 DB_PATH='resources.db'
 RESOURCES_PATH='../input/resources.csv'
-TABLE_FORMAT = 'id INT PRIMARY KEY, name TEXT, location TEXT, model TEXT'
+TABLE_FORMAT = 'id INT PRIMARY KEY, name TEXT, location TEXT, model TEXT, state TEXT'
 TABLE_NAME = 'main_table'
 
 def main():
@@ -21,7 +21,7 @@ def main():
             insert_data = [tuple(row) for row in csvreader]
             cursor.executemany(insert_query, insert_data)
     except:
-        print(f'Something went wrong...')
+        print(f"Something went wrong...\nTry removing '{DB_PATH}' and make sure '{RESOURCES_PATH}' exists")
         return
 
     conn.commit()
@@ -30,7 +30,7 @@ def main():
 def print_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM {TABLE_NAME}")
+    cursor.execute(f"SELECT * FROM {TABLE_NAME}")
     data = cursor.fetchall()
     conn.close()
 
@@ -39,3 +39,4 @@ def print_db():
 
 if __name__ == '__main__':
     main()
+    print_db()
