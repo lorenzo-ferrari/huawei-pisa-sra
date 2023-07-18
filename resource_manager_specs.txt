@@ -1,0 +1,12 @@
+The Resource Manager is a script that:
+Manages a storage of resources (an “editable” file)
+Manages the status of the resources (free/locked)
+Books a free resource for the user that requests it
+Frees a locked resource when the user stops using it
+Returns a free resource or a failure
+Logs its activity to a log file
+When an user is allowed to use a resource the Resource Manager sends the properties referring to that resource to the requesting user
+NOT SUPPORTED:
+Unlocks automatically a locked resource if the user does not respect some condition
+Keeps a prioritized queue of users requesting a resource or a resource with a particular property
+Exposes a web interface to lock/free resources
