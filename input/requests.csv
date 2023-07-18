@@ -1,5 +1,5 @@
-time, user_id, request_type, request, prio, timeout(s)
-0, Lorenzo, name, AMBER, low, 60
-10, Alessandro, model, TC397XE, high, 240
-20, Fabrizio, model, TC397XE, high, 3600
-30, Enrico, location, 10.201.205.97, high, 3600
+time,user_id,request_type,request,prio,timeout(s)
+0,Lorenzo,name,AMBER,low,60
+10,Alessandro,model,TC397XE,high,240
+20,Fabrizio,model,TC397XE,high,3600
+30,Enrico,location,10.201.205.97,high,3600
