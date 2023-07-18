@@ -57,8 +57,3 @@ def unlock(id) -> None:
 if __name__ == '__main__':
     init_db()
     print_db()
-    # request('id', '1')
-    lock(1)
-    print_db()
-    unlock(1)
-    print_db()
