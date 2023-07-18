@@ -1,47 +1,47 @@
 import sqlite3
 import csv
 
-from constants import *
+import constants
 
 def init_db() -> None:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
 
-    create_table_query = f"CREATE TABLE IF NOT EXISTS {TABLE_NAME} ({TABLE_FORMAT});"
+    create_table_query = f"CREATE TABLE IF NOT EXISTS {constants.TABLE_NAME} ({constants.constants.TABLE_FORMAT});"
     conn.execute(create_table_query)
 
     try:
-        with open(RESOURCES_PATH, 'r') as csvfile:
+        with open(constants.RESOURCES_PATH, 'r') as csvfile:
             csvreader = csv.reader(csvfile)
             header = next(csvreader)
-            insert_query = f"INSERT INTO {TABLE_NAME} ({', '.join(header)}) VALUES ({', '.join(['?']*len(header))});"
+            insert_query = f"INSERT INTO {constants.TABLE_NAME} ({', '.join(header)}) VALUES ({', '.join(['?']*len(header))});"
             insert_data = [tuple(row) for row in csvreader]
             cursor.executemany(insert_query, insert_data)
     except:
-        print(f"Something went wrong...\nTry removing '{DB_PATH}' and make sure '{RESOURCES_PATH}' exists")
+        print(f"Something went wrong...\nTry removing '{constants.DB_PATH}' and make sure '{constants.RESOURCES_PATH}' exists")
 
     conn.commit()
     conn.close()
 
 # prints the database
 def print_db() -> None:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM {TABLE_NAME}")
+    cursor.execute(f"SELECT * FROM {constants.TABLE_NAME}")
     data = cursor.fetchall()
     conn.close()
 
-    print(f"{TABLE_NAME}:")
+    print(f"{constants.TABLE_NAME}:")
     for row in data:
         print(row)
 
 """
 # returns the id of a free resource of the requested type, -1 if there are none
 def request(request_type, value) -> int:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
 
-    request_query = f"SELECT * FROM {TABLE_NAME} WHERE state=='free' AND {request_type}='{value}'"
+    request_query = f"SELECT * FROM {constants.TABLE_NAME} WHERE state=='free' AND {request_type}='{value}'"
     # print(request_query)
     cursor.execute(request_query)
 
@@ -59,21 +59,21 @@ def request(request_type, value) -> int:
 """
 
 def lock(id) -> None:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
 
     print(f'Locking resource with id={id}')
-    cursor.execute(f"UPDATE {TABLE_NAME} SET state=? WHERE id=?", ('locked', id))
+    cursor.execute(f"UPDATE {constants.TABLE_NAME} SET state=? WHERE id=?", ('locked', id))
 
     conn.commit()
     conn.close()
 
 def unlock(id) -> None:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
 
     print(f'Unlocking resource with id={id}')
-    cursor.execute(f"UPDATE {TABLE_NAME} SET state=? WHERE id=?", ('free', id))
+    cursor.execute(f"UPDATE {constants.TABLE_NAME} SET state=? WHERE id=?", ('free', id))
 
     conn.commit()
     conn.close()

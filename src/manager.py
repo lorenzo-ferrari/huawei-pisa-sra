@@ -1,14 +1,14 @@
 import sqlite3
 
 import db
-from constants import *
+import constants
 
 # returns the ip of a free resource of the requested type, -1 if there are none
 def request_db(request_type, value) -> str:
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    request_query = f"SELECT id,location FROM {TABLE_NAME} WHERE state=='free' AND {request_type}='{value}'"
+    request_query = f"SELECT id,location FROM {constants.TABLE_NAME} WHERE state=='free' AND {request_type}='{value}'"
     print(request_query)
     cursor.execute(request_query)
 
