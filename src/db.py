@@ -1,10 +1,7 @@
 import sqlite3
 import csv
 
-DB_PATH='resources.db'
-RESOURCES_PATH='../input/resources.csv'
-TABLE_FORMAT = 'id TEXT PRIMARY KEY, name TEXT, location TEXT, model TEXT, state TEXT'
-TABLE_NAME = 'main_table'
+from constants import *
 
 def init_db() -> None:
     conn = sqlite3.connect(DB_PATH)
@@ -22,11 +19,11 @@ def init_db() -> None:
             cursor.executemany(insert_query, insert_data)
     except:
         print(f"Something went wrong...\nTry removing '{DB_PATH}' and make sure '{RESOURCES_PATH}' exists")
-        return
 
     conn.commit()
     conn.close()
 
+# prints the database
 def print_db() -> None:
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -38,6 +35,7 @@ def print_db() -> None:
     for row in data:
         print(row)
 
+"""
 # returns the id of a free resource of the requested type, -1 if there are none
 def request(request_type, value) -> int:
     conn = sqlite3.connect(DB_PATH)
@@ -53,12 +51,12 @@ def request(request_type, value) -> int:
     if len(data) == 0:
         return -1
 
-    lock(data[0][0])
     return data[0]
 
     print(f"request result:")
     for row in data:
         print(row)
+"""
 
 def lock(id) -> None:
     conn = sqlite3.connect(DB_PATH)
@@ -84,7 +82,7 @@ if __name__ == '__main__':
     init_db()
     print_db()
     # request('id', '1')
-    lock(2)
+    lock(1)
     print_db()
-    unlock(2)
+    unlock(1)
     print_db()
