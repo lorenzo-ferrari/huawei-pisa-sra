@@ -23,7 +23,6 @@ def init_db() -> None:
     conn.commit()
     conn.close()
 
-# prints the database
 def print_db() -> None:
     conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
