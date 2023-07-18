@@ -3,10 +3,10 @@ import csv
 
 DB_PATH='resources.db'
 RESOURCES_PATH='../input/resources.csv'
-TABLE_FORMAT = 'id INT PRIMARY KEY, name TEXT, location TEXT, model TEXT, state TEXT'
+TABLE_FORMAT = 'id TEXT PRIMARY KEY, name TEXT, location TEXT, model TEXT, state TEXT'
 TABLE_NAME = 'main_table'
 
-def main():
+def init_db() -> None:
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -27,16 +27,64 @@ def main():
     conn.commit()
     conn.close()
 
-def print_db():
+def print_db() -> None:
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute(f"SELECT * FROM {TABLE_NAME}")
     data = cursor.fetchall()
     conn.close()
 
+    print(f"{TABLE_NAME}:")
     for row in data:
         print(row)
 
+# returns the id of a free resource of the requested type, -1 if there are none
+def request(request_type, value) -> int:
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    request_query = f"SELECT * FROM {TABLE_NAME} WHERE state=='free' AND {request_type}='{value}'"
+    # print(request_query)
+    cursor.execute(request_query)
+
+    data = cursor.fetchall()
+    conn.close()
+    
+    if len(data) == 0:
+        return -1
+
+    lock(data[0][0])
+    return data[0]
+
+    print(f"request result:")
+    for row in data:
+        print(row)
+
+def lock(id) -> None:
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    print(f'Locking resource with id={id}')
+    cursor.execute(f"UPDATE {TABLE_NAME} SET state=? WHERE id=?", ('locked', id))
+
+    conn.commit()
+    conn.close()
+
+def unlock(id) -> None:
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    print(f'Unlocking resource with id={id}')
+    cursor.execute(f"UPDATE {TABLE_NAME} SET state=? WHERE id=?", ('free', id))
+
+    conn.commit()
+    conn.close()
+
 if __name__ == '__main__':
-    main()
+    init_db()
+    print_db()
+    # request('id', '1')
+    lock(2)
+    print_db()
+    unlock(2)
     print_db()
