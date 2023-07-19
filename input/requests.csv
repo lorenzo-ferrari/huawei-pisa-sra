@@ -1,6 +1,6 @@
 time,user_id,request_type,request,prio,timeout
 0,Lorenzo,name,AMBER,low,60
-1,Roiti1,model,TC397XE.low,12
+1,Roiti1,model,TC397XE,low,12
 3,Fermi_chads,model,TC397XE,low,12
 5,Sort_ilegio,model,TC397XE,high,1
 7,Tonni_tosti,name,AMBER,high,12
