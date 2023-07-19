@@ -7,7 +7,7 @@ def init_db() -> None:
     conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
 
-    create_table_query = f"CREATE TABLE IF NOT EXISTS {constants.TABLE_NAME} ({constants.constants.TABLE_FORMAT});"
+    create_table_query = f"CREATE TABLE IF NOT EXISTS {constants.TABLE_NAME} ({constants.TABLE_FORMAT});"
     conn.execute(create_table_query)
 
     try:
