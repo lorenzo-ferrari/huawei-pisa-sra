@@ -1,9 +1,12 @@
 import sqlite3
 import csv
 import heapq
+import logging
 
 import db
 import constants
+
+logging.basicConfig(filename='../log.txt', filemode='a', format='%(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
 class Event:
     def __init__(self, timestamp, user_id, request_type, value, prio, timeout = -1):
@@ -52,21 +55,25 @@ def handle_event(event):
     if event.timeout == -1:
         assert event.request_type == "id"
         db.unlock(event.value)
-        print(f'Timestamp {event.timestamp} : user {event.user_id} freed the resource with id {event.value}')
+        logging.info(f'[.] Timestamp {event.timestamp} : user {event.user_id} freed the resource with id {event.value}')
+        #print(f'Timestamp {event.timestamp} : user {event.user_id} freed the resource with id {event.value}')
     else:
         resource_id = request_db(event.request_type, event.value)
-        print(f'Timestamp {event.timestamp} : user {event.user_id} requested a resource with "{event.request_type}":"{event.value}"')
+        logging.info(f'[?]\tTimestamp {event.timestamp} : user {event.user_id} requested a resource with "{event.request_type}":"{event.value}"')
+        #print(f'Timestamp {event.timestamp} : user {event.user_id} requested a resource with "{event.request_type}":"{event.value}"')
         if resource_id == -1:
-            print(f'\trequest denied')
+            logging.info(f'[-]\trequest denied')
+            #print(f'\trequest denied')
         else:
             resource_ip = db.ipById(resource_id)
             db.lock(resource_id)
-            print(f'\trequest accepted: user {event.user_id} obtained access to ip {resource_ip}')
+            logging.info(f'[+]\trequest accepted: user {event.user_id} obtained access to ip {resource_ip}')
+            #print(f'\trequest accepted: user {event.user_id} obtained access to ip {resource_ip}')
             q.push(Event(event.timestamp + event.timeout, event.user_id, "id", resource_id, event.prio, -1))
 
 def run_simulation():
     # currently do nothing
-    print('Running simulation...')
+    #print('Running simulation...')
     with open(constants.REQUESTS_PATH, 'r') as csvfile:
         csvreader = csv.reader(csvfile)
 
