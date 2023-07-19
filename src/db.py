@@ -38,7 +38,6 @@ def lock(id) -> None:
     conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
 
-    #print(f'Locking resource with id={id}')
     cursor.execute(f"UPDATE {constants.TABLE_NAME} SET state=? WHERE id=?", ('locked', id))
 
     conn.commit()
@@ -48,7 +47,6 @@ def unlock(id) -> None:
     conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
 
-    #print(f'Unlocking resource with id={id}')
     cursor.execute(f"UPDATE {constants.TABLE_NAME} SET state=? WHERE id=?", ('free', id))
 
     conn.commit()
@@ -58,17 +56,14 @@ def ipById(id) -> str:
     conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
 
-    #print(f'Unlocking resource with id={id}')
     cursor.execute(f"SELECT location FROM {constants.TABLE_NAME} WHERE id=?", id)
 
     data = cursor.fetchall()
-    #print(data)
     assert len(data) != 0
     ip = data[0]
 
     conn.close()
     return ip
-
 
 if __name__ == '__main__':
     init_db()

@@ -33,7 +33,6 @@ class CustomQueue:
 
 q = CustomQueue()
 
-# returns the id of a free resource of the requested type, -1 if there are none
 def request_db(request_type, value) -> int:
     conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
@@ -56,24 +55,18 @@ def handle_event(event):
         assert event.request_type == "id"
         db.unlock(event.value)
         logging.info(f'[.] Timestamp {event.timestamp} : user {event.user_id} freed the resource with id {event.value}')
-        #print(f'Timestamp {event.timestamp} : user {event.user_id} freed the resource with id {event.value}')
     else:
         resource_id = request_db(event.request_type, event.value)
         logging.info(f'[?]\tTimestamp {event.timestamp} : user {event.user_id} requested a resource with "{event.request_type}":"{event.value}"')
-        #print(f'Timestamp {event.timestamp} : user {event.user_id} requested a resource with "{event.request_type}":"{event.value}"')
         if resource_id == -1:
             logging.info(f'[-]\trequest denied')
-            #print(f'\trequest denied')
         else:
             resource_ip = db.ipById(resource_id)
             db.lock(resource_id)
             logging.info(f'[+]\trequest accepted: user {event.user_id} obtained access to ip {resource_ip}')
-            #print(f'\trequest accepted: user {event.user_id} obtained access to ip {resource_ip}')
             q.push(Event(event.timestamp + event.timeout, event.user_id, "id", resource_id, event.prio, -1))
 
 def run_simulation():
-    # currently do nothing
-    #print('Running simulation...')
     with open(constants.REQUESTS_PATH, 'r') as csvfile:
         csvreader = csv.reader(csvfile)
 
@@ -89,9 +82,7 @@ def run_simulation():
             handle_event(event)
 
 def main():
-    # request_db('id', 2)
     run_simulation()
-
 
 if __name__=='__main__':
     main()
