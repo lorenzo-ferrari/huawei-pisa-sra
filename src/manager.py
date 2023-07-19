@@ -54,8 +54,6 @@ def request_db(request_type, value) -> int:
 def handle_event(event):
     global timer
     timer = event.timestamp
-    print(f'timestamp: {event.timestamp}')
-    print(f'timeout: {event.timeout}')
 
     if event.timeout == -1:
         assert event.request_type == "id"
