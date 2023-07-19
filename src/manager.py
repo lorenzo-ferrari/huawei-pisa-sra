@@ -6,7 +6,7 @@ import logging
 import db
 import constants
 
-logging.basicConfig(filename='../log.txt', filemode='a', format='%(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
+logging.basicConfig(filename='../log.txt', filemode='a', format='%(message)s', level=logging.INFO)
 
 class Event:
     def __init__(self, timestamp, user_id, request_type, value, prio, timeout = -1):
@@ -32,12 +32,13 @@ class CustomQueue:
         return len(self.q) == 0
 
 q = CustomQueue()
+timer = 0
 
 def request_db(request_type, value) -> int:
     conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
 
-    request_query = f"SELECT id,location FROM {constants.TABLE_NAME} WHERE state=='free' AND {request_type}='{value}'"
+    request_query = f"SELECT id FROM {constants.TABLE_NAME} WHERE state=='free' AND {request_type}='{value}'"
     cursor.execute(request_query)
 
     data = cursor.fetchall()
@@ -47,23 +48,25 @@ def request_db(request_type, value) -> int:
     if len(data) == 0:
         return -1
     else:
-        resource_id, resource_ip = data[0]
+        resource_id = data[0][0]
         return resource_id
 
 def handle_event(event):
+    global timer
+    timer = event.timestamp
     if event.timeout == -1:
         assert event.request_type == "id"
         db.unlock(event.value)
-        logging.info(f'[.] Timestamp {event.timestamp} : user {event.user_id} freed the resource with id {event.value}')
+        logging.info(f'[.] Timestamp {timer} - user {event.user_id} freed the resource with id {event.value}')
     else:
         resource_id = request_db(event.request_type, event.value)
-        logging.info(f'[?]\tTimestamp {event.timestamp} : user {event.user_id} requested a resource with "{event.request_type}":"{event.value}"')
+        logging.info(f'[?] Timestamp {timer} - user {event.user_id} requested a resource with "{event.request_type}":"{event.value}"')
         if resource_id == -1:
-            logging.info(f'[-]\trequest denied')
+            logging.info(f'[-] Timestamp {timer} - request denied')
         else:
             resource_ip = db.ipById(resource_id)
             db.lock(resource_id)
-            logging.info(f'[+]\trequest accepted: user {event.user_id} obtained access to ip {resource_ip}')
+            logging.info(f'[+] Timestamp {timer} - request accepted : user {event.user_id} obtained access to ip {resource_ip} for up to {event.timeout} seconds')
             q.push(Event(event.timestamp + event.timeout, event.user_id, "id", resource_id, event.prio, -1))
 
 def run_simulation():
@@ -73,7 +76,6 @@ def run_simulation():
         next(csvreader)
         global q
         for row in csvreader:
-            print(row)
             (timestamp, user_id, request_type, value, prio, timeout) = row
             q.push(Event(timestamp, user_id, request_type, value, prio, timeout))
 

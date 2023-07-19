@@ -60,7 +60,7 @@ def ipById(id) -> str:
 
     data = cursor.fetchall()
     assert len(data) != 0
-    ip = data[0]
+    ip = data[0][0]
 
     conn.close()
     return ip
