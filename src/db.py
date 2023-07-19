@@ -62,7 +62,6 @@ def ipById(id) -> str:
     cursor.execute(f"SELECT location FROM {constants.TABLE_NAME} WHERE id=?", id)
 
     data = cursor.fetchall()
-    print(data)
     assert len(data) != 0
     ip = data[0]
 
