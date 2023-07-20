@@ -7,7 +7,7 @@
 * input simulation (requests) file (csv)
 * priority queue
 * should events have a dedicated class? probably yes
-* store the events in a priority queue and process them in cronological order
+* store the events in a priority queue and process them in chronological order
     * note: in case of tie, "UNLOCK" events should preceed "LOCK" events
 
 ### How to handle request
