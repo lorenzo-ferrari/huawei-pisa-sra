@@ -32,12 +32,12 @@ time,user_id,request_type,request,prio,timeout
 100,Marco,model,S32K148,high,40
 100,Filippo,model,S32K148,low,10
 140,Luca,location,10.201.205.97,low,40
+180,Luca,name,NAUTILUS_S32K148,high,240
 200,Carlo,model,TC397XE,low,600
 250,Stefano,model,TC397XE,high,60
-600,Giovanni,location,10.201.205.97,low,360
-180,Luca,name,NAUTILUS_S32K148,high,240
-420,Pietro,name,NAUTILUS_S32K148,high,360
 420,Fabrizio,name,NAUTILUS_S32K148,low,300
+420,Pietro,name,NAUTILUS_S32K148,high,360
+600,Giovanni,location,10.201.205.97,low,360
 600,Lorenzo,model,S32K148,low,240
 660,Alessandro,name,ADAMITE,high,180
 800,Enrico,location,10.201.205.100,low,300
