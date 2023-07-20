@@ -2,7 +2,6 @@ import sqlite3
 import csv
 import heapq
 import logging
-import sched
 import time
 
 import db
@@ -113,8 +112,7 @@ def handle_event(event) -> None:
             eventsQ.push(Event(constants.FREE_EVENT_TYPE, int(event.timestamp) + int(event.timeout), -1, event.user_id, "id", resource_id, event.prio, -1))
 
 def online_request(user_id, request_type, value, prio, timeout = constants.MAX_TIMEOUT) -> None:
-    is_satisfied.append('False')
-    handle_event(Event(constants.REQUEST_EVENT_TYPE, timer, new_request_id, user_id, request_type, value, prio, timeout))
+    handle_event(Event(constants.REQUEST_EVENT_TYPE, timer, new_request_id(), user_id, request_type, value, prio, timeout))
 
 def online_free(user_id, request_type, value, prio) -> None:
     handle_event(Event(constants.FREE_REQUEST_TYPE, timer, constants.FREE_REQUEST_ID, user_id, request_type, value, prio, -1))
@@ -131,7 +129,6 @@ def run_simulation() -> None:
         global eventsQ
         for row in csvreader:
             (timestamp, user_id, request_type, value, prio, timeout) = row
-            is_satisfied.append('False')
             eventsQ.push(Event(constants.REQUEST_EVENT_TYPE, timestamp, new_request_id(), user_id, request_type, value, prio, timeout))
 
         check_queue()
