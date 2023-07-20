@@ -6,7 +6,7 @@ import logging
 import db
 import constants
 
-logging.basicConfig(filename='../log.txt', filemode='a', format='%(message)s', level=logging.INFO)
+logging.basicConfig(filename='../log.txt', filemode='w', format='%(message)s', level=logging.INFO)
 
 class Event:
     def __init__(self, timestamp, user_id, request_type, value, prio, timeout):
