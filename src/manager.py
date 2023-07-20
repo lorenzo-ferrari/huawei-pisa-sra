@@ -9,133 +9,136 @@ import constants
 
 logging.basicConfig(filename='../log.txt', filemode='w', format='%(message)s', level=logging.INFO)
 
-class Event:
-    def __init__(self, event_type, timestamp, request_id, user_id, request_type, value, prio, timeout = -1):
-        self.event_type = event_type
+class RequestEvent:
+    def __init__(self, timestamp, request_id, user_id, timeout): # todo, add priorities
         self.timestamp = timestamp
         self.request_id = request_id
         self.user_id = user_id
-        self.request_type = request_type
-        self.value = value
-        self.prio = prio
         self.timeout = timeout
 
     def __lt__(self, oth):
-        if self.timestamp != oth.timestamp:
-            return self.timestamp < oth.timestamp
-        return self.event_type == constants.FREE_EVENT_TYPE && oth.event_type == constants.REQUEST_EVENT_TYPE:
+        # in the future, take into account priorities
+        return self.timestamp < oth.timestamp
+
+class FreeEvent:
+    def __init__(self, timestamp, user_id, resource_id):
+        self.timestamp = timestamp
+        self.user_id = user_id
+        self.resource_id = resource_id
+
+    def __lt__(self, oth):
+        return self.timestamp < oth.timestamp
 
 class CustomQueue:
     def __init__(self):
         self.q = []
-    def push(self, event : Event) -> None :
+    def push(self, event) -> None :
         heapq.heappush(self.q, event)
-    def pop(self) -> Event:
+    def top(self):
+        return self.q[0]
+    def pop(self):
         element = heapq.heappop(self.q)
         return element
     def empty(self) -> bool:
         return len(self.q) == 0
 
-eventsQ = CustomQueue()
-timer = 0
-cur_request_id = 0
-is_satisfied = []
-queues = []
+class State:
+    def __init__(self, state):
+        self.eventsQ = state.eventsQ
+        self.timer = state.timer
+        self.cur_request_id = state.cur_request_id
+        self.is_satisfied = state.is_statisfied
+        self.queues = state.queues
 
-def new_request_id() -> int:
-    global is_satisfied
-    global cur_request_id
-    is_satisfied.append(False)
-    ret = cur_request_id
-    cur_request_id += 1
-    return ret
+    def __init__(self):
+        self.eventsQ = CustomQueue()
+        self.timer = 0
+        self.cur_request_id = 0
+        self.is_satisfied = []
+        self.queues = []
 
-def request_db(request_type, value) -> int:
+    def new_request_id(self) -> int:
+        self.is_satisfied.append(False)
+        ret = self.cur_request_id
+        self.cur_request_id += 1
+        return ret
+    
+state = State()
+
+def online_request(timestamp, user_id, request_type, value, timeout = constants.MAX_TIMEOUT) -> None:
     conn = sqlite3.connect(constants.DB_PATH)
-    cursor = conn.cursor()
-    request_query = f"SELECT id FROM {constants.TABLE_NAME} WHERE state=='free' AND {request_type}='{value}'"
-    cursor.execute(request_query)
-    data = cursor.fetchall()
+    offline_request(conn, timestamp, user_id, request_type, value, timeout)
     conn.close()
-    if len(data) == 0:
-        return constants.ID_NOT_FOUND
-    else:
-        resource_id = data[0][0]
-        return resource_id
 
-def candidates_resources(request_type, value):
+def online_free(user_id, resource_id) -> None:
     conn = sqlite3.connect(constants.DB_PATH)
-    cursor = conn.cursor()
-    request_query = f"SELECT id FROM {constants.TABLE_NAME} WHERE {request_type}='{value}'"
-    cursor.execute(request_query)
-    data = cursor.fetchall()
+    offline_free(conn, user_id, resource_id)
     conn.close()
-    return [int(x[0]) for x in data]
 
-def handle_event(event) -> None:
-    global timer
-    global eventsQ
-    global queues
-    timer = event.timestamp
+def offline_request(conn, timestamp, user_id, request_type, value, timeout) -> None:
+    global state # in the future, load state from file
+    state.timer = timestamp
 
-    if event.event_type == constants.FREE_EVENT_TYPE:
-        assert event.request_type == "id"
-        assert event.request_id == constants.FREE_REQUEST_ID
-        id = int(event.value)
-        db.unlock(event.value)
-        logging.info(f'[.] Timestamp {timer} - user {event.user_id} freed the resource with id {id}')
+    free_expired_assignments(conn)
 
-        # check for people in queue
-        while not queues[id].empty():
-            req = queues[id].pop()
-            if is_satisfied[req.request_id]:
-                continue
-            else:
-                req.timestamp = timer
-                eventsQ.push(req)
-                break
-    elif is_satisfied[event.request_id]:
-        return
+    logging.info(f'[?] Timestamp {state.timer} - user {user_id} requested a resource with "{request_type}":"{value}"')
+    request_id = state.new_request_id()
+    resource_id = db.request_free_resource(conn, request_type, value)
+
+    if resource_id == constants.ID_NOT_FOUND:
+        logging.info(f'[-] Timestamp {state.timer} - request currently denied: queueing...')
+        possible_ids = db.candidates_resources(conn, request_type, value)
+        for id in possible_ids:
+            state.queues[id].push(RequestEvent(timestamp, request_id, user_id, timeout))
     else:
-        resource_id = request_db(event.request_type, event.value)
-        logging.info(f'[?] Timestamp {timer} - user {event.user_id} requested a resource with "{event.request_type}":"{event.value}"')
-        if resource_id == constants.ID_NOT_FOUND:
-            logging.info(f'[-] Timestamp {timer} - request currently denied: queueing...')
-            possible_ids = candidates_resources(event.request_type, event.value)
-            for i in possible_ids:
-                queues[i].push(event)
+        resource_ip = db.ipById(conn, resource_id)
+        db.lock(conn, resource_id)
+        state.is_satisfied[request_id] = True
+        logging.info(f'[+] Timestamp {state.timer} - request accepted : user {user_id} obtained access to ip {resource_ip} for up to {timeout} seconds')
+        state.eventsQ.push(FreeEvent(int(state.timer) + int(timeout), user_id, resource_id))
+
+
+def offline_free(conn, user_id, resource_id) -> None:
+    db.unlock(conn, int(resource_id))
+    logging.info(f'[.] Timestamp {state.timer} - user {user_id} freed the resource with id {resource_id}')
+
+    check_resource_queue(conn, int(resource_id))
+
+def check_resource_queue(conn, resource_id):
+    # check for users waiting for resource `resource_id`
+    while not state.queues[int(resource_id)].empty():
+        req = state.queues[int(resource_id)].pop()
+        if state.is_satisfied[int(req.request_id)]:
+            continue
         else:
-            resource_ip = db.ipById(resource_id)
-            db.lock(resource_id)
-            is_satisfied[event.request_id] = True
-            logging.info(f'[+] Timestamp {timer} - request accepted : user {event.user_id} obtained access to ip {resource_ip} for up to {event.timeout} seconds')
-            eventsQ.push(Event(constants.FREE_EVENT_TYPE, int(event.timestamp) + int(event.timeout), -1, event.user_id, "id", resource_id, event.prio, -1))
+            db.lock(conn, int(resource_id))
+            offline_request(conn, state.timer, req.user_id, "id", resource_id, timeout = req.timeout)
+            resource_ip = db.ipById(conn, resource_id)
+            logging.info(f'[+] Timestamp {state.timer} - user {req.user_id} (queueing) obtained access to ip {resource_ip} for up to {req.timeout} seconds')
+            state.eventsQ.push(FreeEvent(int(state.timer) + int(req.timeout), req.user_id, resource_id))
+            break
 
-def online_request(user_id, request_type, value, prio, timeout = constants.MAX_TIMEOUT) -> None:
-    handle_event(Event(constants.REQUEST_EVENT_TYPE, timer, new_request_id(), user_id, request_type, value, prio, timeout))
-
-def online_free(user_id, request_type, value, prio) -> None:
-    handle_event(Event(constants.FREE_REQUEST_TYPE, timer, constants.FREE_REQUEST_ID, user_id, request_type, value, prio, -1))
-
-def check_queue() -> None:
-    while not eventsQ.empty():
-        event = eventsQ.pop()
-        handle_event(event)
+def free_expired_assignments(conn) -> None:
+    while not state.eventsQ.empty() and state.eventsQ.top().timestamp <= int(state.timer):
+        event = state.eventsQ.pop()
+        offline_free(conn, event.user_id, event.resource_id)
 
 def run_simulation() -> None:
     with open(constants.REQUESTS_PATH, 'r') as csvfile:
         csvreader = csv.reader(csvfile)
         next(csvreader)
-        global eventsQ
+        global state
         for row in csvreader:
             (timestamp, user_id, request_type, value, prio, timeout) = row
-            eventsQ.push(Event(constants.REQUEST_EVENT_TYPE, timestamp, new_request_id(), user_id, request_type, value, prio, timeout))
-
-        check_queue()
+            state.timer = timestamp
+            online_request(timestamp, user_id, request_type, value, timeout)
 
 def main():
-    global queues
-    queues = [CustomQueue() for _ in range(db.cardinality() + 1)]
+    # init manager
+    conn = sqlite3.connect(constants.DB_PATH)
+    global state
+    state.queues = [CustomQueue() for _ in range(db.cardinality(conn) + 1)]
+    conn.close()
 
     run_simulation()
 
