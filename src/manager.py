@@ -9,7 +9,8 @@ import constants
 logging.basicConfig(filename='../log.txt', filemode='w', format='%(message)s', level=logging.INFO)
 
 class Event:
-    def __init__(self, timestamp, request_id, user_id, request_type, value, prio, timeout):
+    def __init__(self, event_type, timestamp, request_id, user_id, request_type, value, prio, timeout = -1):
+        self.event_type = event_type
         self.timestamp = timestamp
         self.request_id = request_id
         self.user_id = user_id
@@ -54,7 +55,7 @@ def request_db(request_type, value) -> int:
     data = cursor.fetchall()
     conn.close()
     if len(data) == 0:
-        return -1
+        return constants.ID_NOT_FOUND
     else:
         resource_id = data[0][0]
         return resource_id
@@ -74,8 +75,9 @@ def handle_event(event) -> None:
     global queues
     timer = event.timestamp
 
-    if event.timeout == -1:
+    if event.event_type == constants.FREE_EVENT_TYPE:
         assert event.request_type == "id"
+        assert event.request_id == constants.FREE_REQUEST_ID
         id = int(event.value)
         db.unlock(event.value)
         logging.info(f'[.] Timestamp {timer} - user {event.user_id} freed the resource with id {id}')
@@ -94,8 +96,8 @@ def handle_event(event) -> None:
     else:
         resource_id = request_db(event.request_type, event.value)
         logging.info(f'[?] Timestamp {timer} - user {event.user_id} requested a resource with "{event.request_type}":"{event.value}"')
-        if resource_id == -1:
-            logging.info(f'[-] Timestamp {timer} - request denied')
+        if resource_id == constants.ID_NOT_FOUND:
+            logging.info(f'[-] Timestamp {timer} - request currently denied: queueing...')
             possible_ids = candidates_resources(event.request_type, event.value)
             for i in possible_ids:
                 queues[i].push(event)
@@ -104,14 +106,14 @@ def handle_event(event) -> None:
             db.lock(resource_id)
             is_satisfied[event.request_id] = True
             logging.info(f'[+] Timestamp {timer} - request accepted : user {event.user_id} obtained access to ip {resource_ip} for up to {event.timeout} seconds')
-            eventsQ.push(Event(int(event.timestamp) + int(event.timeout), -1, event.user_id, "id", resource_id, event.prio, -1))
+            eventsQ.push(Event(constants.FREE_EVENT_TYPE, int(event.timestamp) + int(event.timeout), -1, event.user_id, "id", resource_id, event.prio, -1))
 
-def online_request(user_id, request_type, value, prio, timeout = 7200) -> None: # max timeout: 2h
+def online_request(user_id, request_type, value, prio, timeout = constants.MAX_TIMEOUT) -> None:
     is_satisfied.append('False')
-    handle_event(Event(timer, new_request_id, user_id, request_type, value, prio, timeout))
+    handle_event(Event(constants.REQUEST_EVENT_TYPE, timer, new_request_id, user_id, request_type, value, prio, timeout))
 
 def online_free(user_id, request_type, value, prio) -> None:
-    handle_event(Event(timer, -1, user_id, request_type, value, prio, -1))
+    handle_event(Event(constants.FREE_REQUEST_TYPE, timer, constants.FREE_REQUEST_ID, user_id, request_type, value, prio, -1))
 
 def run_simulation() -> None:
     with open(constants.REQUESTS_PATH, 'r') as csvfile:
@@ -121,7 +123,7 @@ def run_simulation() -> None:
         for row in csvreader:
             (timestamp, user_id, request_type, value, prio, timeout) = row
             is_satisfied.append('False')
-            eventsQ.push(Event(timestamp, new_request_id(), user_id, request_type, value, prio, timeout))
+            eventsQ.push(Event(constants.REQUEST_EVENT_TYPE, timestamp, new_request_id(), user_id, request_type, value, prio, timeout))
 
         while not eventsQ.empty():
             event = eventsQ.pop()
@@ -132,13 +134,6 @@ def main():
     queues = [CustomQueue() for _ in range(db.cardinality() + 1)]
 
     run_simulation()
-    # db.print_db()
-    # online_request('Lorenzo', 'id', 1, 'low')
-    # db.print_db()
-    # online_free('Lorenzo', 'id', 1, 'low')
-    # db.print_db()
-    # online_free('Lorenzo', 'id', 1, 'low')
-
     # db.print_db()
     # online_request('Lorenzo', 'id', 1, 'low')
     # db.print_db()
