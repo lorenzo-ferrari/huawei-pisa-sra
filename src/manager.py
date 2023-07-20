@@ -6,10 +6,10 @@ import logging
 import db
 import constants
 
-logging.basicConfig(filename='../log.txt', filemode='a', format='%(message)s', level=logging.INFO)
+logging.basicConfig(filename='../log.txt', filemode='w', format='%(message)s', level=logging.INFO)
 
 class Event:
-    def __init__(self, timestamp, user_id, request_type, value, prio, timeout = -1):
+    def __init__(self, timestamp, user_id, request_type, value, prio, timeout):
         self.timestamp = timestamp
         self.user_id = user_id
         self.request_type = request_type
@@ -54,6 +54,7 @@ def request_db(request_type, value) -> int:
 def handle_event(event):
     global timer
     timer = event.timestamp
+
     if event.timeout == -1:
         assert event.request_type == "id"
         db.unlock(event.value)
@@ -67,7 +68,13 @@ def handle_event(event):
             resource_ip = db.ipById(resource_id)
             db.lock(resource_id)
             logging.info(f'[+] Timestamp {timer} - request accepted : user {event.user_id} obtained access to ip {resource_ip} for up to {event.timeout} seconds')
-            q.push(Event(event.timestamp + event.timeout, event.user_id, "id", resource_id, event.prio, -1))
+            q.push(Event(int(event.timestamp) + int(event.timeout), event.user_id, "id", resource_id, event.prio, -1))
+
+def online_request(user_id, request_type, value, prio, timeout = 7200): # max timeout: 2h
+    handle_event(Event(timer, user_id, request_type, value, prio, timeout))
+
+def online_free(user_id, request_type, value, prio):
+    handle_event(Event(timer, user_id, request_type, value, prio, -1))
 
 def run_simulation():
     with open(constants.REQUESTS_PATH, 'r') as csvfile:
@@ -85,6 +92,12 @@ def run_simulation():
 
 def main():
     run_simulation()
+    # db.print_db()
+    # online_request('Lorenzo', 'id', 1, 'low')
+    # db.print_db()
+    # online_free('Lorenzo', 'id', 1, 'low')
+    # db.print_db()
+    # online_free('Lorenzo', 'id', 1, 'low')
 
 if __name__=='__main__':
     main()
