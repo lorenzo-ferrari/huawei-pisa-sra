@@ -42,5 +42,5 @@ time,user_id,request_type,request,prio,timeout
 660,Alessandro,name,ADAMITE,high,180
 800,Enrico,location,10.201.205.100,low,300
 801,Luca,location,10.201.205.100,high,60
-840,Stefano,name,RUBY,low,2400
-846,Carlo,model,S32K148,high,3000
+840,Stefano,name,RUBY,low,24
+846,Carlo,model,S32K148,high,30
