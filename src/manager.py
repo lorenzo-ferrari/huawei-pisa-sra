@@ -2,6 +2,8 @@ import sqlite3
 import csv
 import heapq
 import logging
+import sched
+import time
 
 import db
 import constants
@@ -115,6 +117,11 @@ def online_request(user_id, request_type, value, prio, timeout = constants.MAX_T
 def online_free(user_id, request_type, value, prio) -> None:
     handle_event(Event(constants.FREE_REQUEST_TYPE, timer, constants.FREE_REQUEST_ID, user_id, request_type, value, prio, -1))
 
+def check_queue() -> None:
+    while not eventsQ.empty():
+        event = eventsQ.pop()
+        handle_event(event)
+
 def run_simulation() -> None:
     with open(constants.REQUESTS_PATH, 'r') as csvfile:
         csvreader = csv.reader(csvfile)
@@ -125,21 +132,13 @@ def run_simulation() -> None:
             is_satisfied.append('False')
             eventsQ.push(Event(constants.REQUEST_EVENT_TYPE, timestamp, new_request_id(), user_id, request_type, value, prio, timeout))
 
-        while not eventsQ.empty():
-            event = eventsQ.pop()
-            handle_event(event)
+        check_queue()
 
 def main():
     global queues
     queues = [CustomQueue() for _ in range(db.cardinality() + 1)]
 
     run_simulation()
-    # db.print_db()
-    # online_request('Lorenzo', 'id', 1, 'low')
-    # db.print_db()
-    # online_free('Lorenzo', 'id', 1, 'low')
-    # db.print_db()
-    # online_free('Lorenzo', 'id', 1, 'low')
 
 if __name__=='__main__':
     main()
