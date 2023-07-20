@@ -22,7 +22,9 @@ class Event:
         self.timeout = timeout
 
     def __lt__(self, oth):
-        return (int(self.timestamp), int(self.timeout)) < (int(oth.timestamp), int(oth.timeout))
+        if self.timestamp != oth.timestamp:
+            return self.timestamp < oth.timestamp
+        return self.event_type == constants.FREE_EVENT_TYPE && oth.event_type == constants.REQUEST_EVENT_TYPE:
 
 class CustomQueue:
     def __init__(self):
