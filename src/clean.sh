@@ -9,5 +9,3 @@ fi
 if [ -d __pycache__ ]; then
     rm -r __pycache__
 fi
-
-python db.py
