@@ -2,3 +2,4 @@
 *.pickle
 *.txt
 src/__pycache__
+test/
