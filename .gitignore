@@ -1,3 +1,4 @@
-*.db
+*.sqlite
+*.pickle
 src/__pycache__
 log.txt
