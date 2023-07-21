@@ -1,3 +1,5 @@
+#!/bin/python
+
 import time
 import logging
 
@@ -12,7 +14,11 @@ def main():
     request_type,value = input("Enter the kind of resource you need (example: 'model TC397XE'): ").split()
     timeout = int(input("Enter a timeout (in seconds) after which your resource will automatically be freed: "))
 
-    manager.online_request(timestamp, user_id, request_type, value, timeout)
+    outcome = manager.online_request(timestamp, user_id, request_type, value, timeout)
+    if outcome:
+        print("Success")
+    else:
+        print("Currently denied")
 
 if __name__=='__main__':
     main()
