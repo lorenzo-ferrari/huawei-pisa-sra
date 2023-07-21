@@ -9,11 +9,20 @@ Given a limited set of resources and users requesting access to them, assign the
 * log every operation in a ```log.txt``` file
 * to change the locations of the output files, edit ```src/constants.py```
 
+## Usage
+Initialize the db and the manager: ```./clean.sh && ./init.sh```
+
+Display the database content: ```./print_db.py```
+
+Make requests: ```./request_from_input.py```
+
+Free a resource: ```./free_from_input.py```
+
 ## Simulation
 The file ```input/requests.csv``` contains a scenario of ~40 requests which can be used to run a simulation
 * ```cd src/```
 * ```./clean.sh && ./init.sh```
-* ```python3 simulation.py```
+* ```./simulation.py```
 
 ## Hypothetical further development
 * implement a priority system
