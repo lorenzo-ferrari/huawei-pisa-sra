@@ -8,7 +8,6 @@ import pickle
 import db
 import constants
 
-logging.basicConfig(filename='../log.txt', filemode='a', format='%(message)s', level=logging.INFO)
 
 class RequestEvent:
     # in the future, take priorities into account
@@ -87,7 +86,16 @@ def online_free(user_id, resource_id) -> None:
     dump_state(constants.STATE_PATH, state)
     conn.close()
 
+def online_free(user_id, request_type, value) -> None:
+    conn = sqlite3.connect(constants.DB_PATH)
+    resource_id = db.idByAttribute(conn, request_type, value)
+    state = load_state(constants.STATE_PATH)
+    offline_free(conn, state, user_id, resource_id)
+    dump_state(constants.STATE_PATH, state)
+    conn.close()
+
 def offline_request(conn, state, timestamp, user_id, request_type, value, timeout) -> None:
+    logging.basicConfig(filename=constants.LOG_PATH, filemode='a', format='%(message)s', level=logging.INFO)
     state.timer = timestamp
 
     free_expired_assignments(conn, state)
@@ -115,6 +123,7 @@ def offline_free(conn, state, user_id, resource_id) -> None:
     check_resource_queue(conn, state, int(resource_id))
 
 def check_resource_queue(conn, state, resource_id):
+    logging.basicConfig(filename=constants.LOG_PATH, filemode='a', format='%(message)s', level=logging.INFO)
     # check for users waiting for resource `resource_id`
     while not state.queues[int(resource_id)].empty():
         req = state.queues[int(resource_id)].pop()
@@ -131,16 +140,7 @@ def check_resource_queue(conn, state, resource_id):
 def free_expired_assignments(conn, state) -> None:
     while not state.eventsQ.empty() and state.eventsQ.top().timestamp <= int(state.timer):
         event = state.eventsQ.pop()
-        offline_free(conn, event.user_id, event.resource_id)
-
-def run_simulation() -> None:
-    with open(constants.REQUESTS_PATH, 'r') as csvfile:
-        csvreader = csv.reader(csvfile)
-        next(csvreader)
-        global state
-        for row in csvreader:
-            (timestamp, user_id, request_type, value, prio, timeout) = row
-            online_request(timestamp, user_id, request_type, value, timeout)
+        offline_free(conn, state, event.user_id, event.resource_id)
 
 def init_manager():
     conn = sqlite3.connect(constants.DB_PATH)
@@ -148,11 +148,3 @@ def init_manager():
     state.queues = [CustomQueue() for _ in range(db.cardinality(conn) + 1)]
     dump_state(constants.STATE_PATH, state)
     conn.close()
-
-def main():
-    init_manager()
-
-    run_simulation()
-
-if __name__=='__main__':
-    main()

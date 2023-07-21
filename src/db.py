@@ -31,6 +31,19 @@ def ipById(conn, resource_id) -> str:
     ip = data[0][0]
     return ip
 
+def idByAttribute(conn, request_type, value) -> str:
+    # conn = sqlite3.connect(constants.DB_PATH)
+    cursor = conn.cursor()
+    request_query = f"SELECT id FROM {constants.TABLE_NAME} WHERE {request_type}='{value}'"
+    cursor.execute(request_query)
+    data = cursor.fetchall()
+    cursor.close()
+    # conn.close()
+    assert len(data) != 0
+    id = data[0][0]
+    return id
+
+
 def cardinality(conn) -> int:
     # conn = sqlite3.connect(constants.DB_PATH)
     cursor = conn.cursor()
