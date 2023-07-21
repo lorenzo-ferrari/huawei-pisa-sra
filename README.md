@@ -5,11 +5,12 @@ Given a limited set of resources assign them to users in such a way that a resou
 
 ## Implementation
 * the resources are loaded in a sqlite database from a csv file
-* input resources file (csv)
-* input simulation (requests) file (csv)
-    * note: in case of tie, "UNLOCK" events should preceed "LOCK" events
+* to prevent different users from modifying the same file at the same time, every operation is encapsulated in a connection to the database
+* log every operation in a ```log.txt``` file
+* to change the locations of the output files, edit ```src/constants.py```
 
 ## Simulation
+The file ```input/requests.csv``` contains a scenario of ~40 requests which can be used to run a simulation
 * ```cd src/```
 * ```./clean.sh && ./init.sh```
 * ```python3 simulation.py```
