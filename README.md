@@ -27,7 +27,7 @@ The file ```input/requests.csv``` contains a scenario of ~40 requests which can 
 ## Hypothetical further development
 * implement a priority system
     * for example, assign low priority to automated task and high to people
-    * it only affects the queueing system it can be implemented easily based by keeping a queue for 
+    * it only affects the queueing system and it can be easily implemented by keeping separate queues for every priority level
 * assign each node a set of label and let the user refer to them
 * consider some cost assigned to each node and find the minimal cost assignment
     * an example of cost might be the use-history of each node
