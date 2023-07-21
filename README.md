@@ -27,4 +27,4 @@ The file ```input/requests.csv``` contains a scenario of ~40 requests which can 
 
 ## FAQ
 Q: Should I use it in a real scenario? \
-A: ~~Please don't~~ *It probably needs further testing and development.*
+A: ~~Please don't~~ The system works well enough, but it probably needs further testing and development.
