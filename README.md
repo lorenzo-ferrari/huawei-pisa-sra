@@ -15,7 +15,7 @@ The file ```input/requests.csv``` contains a scenario of ~40 requests which can 
 * ```./clean.sh && ./init.sh```
 * ```python3 simulation.py```
 
-## Ideas hypothetical further development
+## Hypothetical further development
 * implement a priority system
     * for example, assign low priority to automated task and high to people
     * it only affects the queueing system it can be implemented easily based by keeping a queue for 
